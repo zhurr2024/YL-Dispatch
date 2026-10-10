@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.DS_Store
+.idea/
+/业务线索模板示例/
+/需求背景/
+.env*

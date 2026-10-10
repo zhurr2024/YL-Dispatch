@@ -1,0 +1,14 @@
+:root {
+  font-family: "Inter", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  color: #24354b;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+body { margin: 0; }
+.public-demo-banner { position: sticky; top: 0; z-index: 9998; padding: 8px 12px; background: #fff2d3; color: #704300; font-size: 12px; text-align: center; }
+* { box-sizing: border-box; }
+button, input, textarea { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+.persistence-warning { position: fixed; z-index: 9999; top: 0; left: 0; right: 0; padding: 8px; background: #fff2d3; color: #975c03; font-size: 13px; text-align: center; }

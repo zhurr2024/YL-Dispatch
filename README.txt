@@ -1,0 +1,45 @@
+YL Dispatch — 全虚构公开演示
+
+全部线索标题、采购方、人员、联系说明、预算、编号、摘要、评级理由及业务结果
+均为专门编写的虚构数据；不代表真实采购、真实员工或任何组织官方系统。
+未包含私人 Office 文件、业务线索模板示例、需求背景或原始工作簿提取工具。
+数据来源标签：公开演示线索（全部虚构）.xlsx（仅为演示标签，并非附带文件）。
+src\data\seed.json 是独立手写的公开样本，不依赖原始文档。
+25 条演示样本：21 条有效，4 条故意无效；12 名销售、3 名系统管理员、7 名运营。
+
+运行（Node.js 22，在本发布目录执行）：
+  npm ci
+  npm run dev
+  PC：http://localhost:5173/YL-Dispatch/#/overview
+  H5：http://localhost:5173/YL-Dispatch/#/h5
+  npm test
+  npm run build
+  npm run preview
+
+GitHub Pages：
+将本目录内容作为 zhurr2024/YL-Dispatch 仓库根目录发布到 main。
+在仓库 Settings > Pages > Build and deployment 中选择 Source: GitHub Actions。
+.github\workflows\deploy-pages.yml 在 main 推送或手动触发后测试、构建并部署 dist。
+预计入口（部署成功后才可访问）：
+  https://zhurr2024.github.io/YL-Dispatch/#/overview
+  https://zhurr2024.github.io/YL-Dispatch/#/h5
+Vite base 为 /YL-Dispatch/，使用 hash 路由，刷新无需 SPA fallback。
+H5 可通过 #/h5?account=SALES-P02 指定虚构销售身份。
+
+演示规则：
+A/B/C 按地域 AND 品类自动派发；D 或未评级可手动派发。
+L001 匹配 P01/P02，L002 匹配 P03，L004 双品类匹配 P04/P05；
+L003 为无匹配销售的 ABC 样本。未评级近一个月池含 10 条演示线索。
+业务日期固定为 2026-10-10，初始反馈及订单均为虚构。
+右上角切换身份；管理员管理导入、人员、规则、权限，销售使用 H5。
+导入历史中的四条失败样本故意展示字段验证，不来自真实工作簿。
+只允许填写固定演示联系说明，不填写真实手机号、邮箱或网址。
+
+边界：
+纯浏览器原型，无后端、真实登录、企微鉴权、实际通知或订单核验。
+权限仅用于交互演示，不是生产安全边界。不要导入真实资料或敏感文件。
+localStorage 使用独立键 yili-public-demo-v1，隔离原应用数据。
+同源 PC/H5 共享公开演示身份和数据；跨窗口最后写入覆盖。
+重置可恢复虚构样本；浏览器清除存储会丢失编辑。
+当前 SheetJS 社区依赖不适合生产级不可信文件处理，仅导入可信演示 XLSX。
+本包仅准备发布内容，不执行 Git 初始化、登录、推送或自动启动服务器。
