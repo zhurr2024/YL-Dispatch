@@ -1,16 +1,19 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import {
   ActionSheet, Button, Empty, Field, Icon, Popup, Tab, Tabbar, TabbarItem,
   Tabs, Tag, closeDialog, closeToast, showConfirmDialog, showToast,
 } from 'vant'
+import type { ActionSheetAction } from 'vant'
 import 'vant/lib/index.css'
 import '../styles/mobile.css'
 import { useStore } from '../store'
 
 const s = useStore()
 const route = useRoute()
+const router = useRouter()
+type AccountAction = ActionSheetAction & { accountId?: string }
 type Store = ReturnType<typeof useStore>
 type Task = ReturnType<Store['claim']>
 type Lead = NonNullable<ReturnType<Store['getLead']>>
@@ -20,6 +23,7 @@ const poolTab = ref('available')
 const taskSearch = ref('')
 const poolSearch = ref('')
 const accountSheet = ref(false)
+const adminSheet = ref(false)
 const detailOpen = ref(false)
 const selectedTaskId = ref('')
 const selectedLeadId = ref('')
@@ -71,12 +75,19 @@ const visibleTasks = computed(() => mine.value.filter(t => {
 }))
 const visiblePool = computed(() => available.value.filter(l => matches(l, poolSearch.value)))
 const visibleClaims = computed(() => claims.value.filter(t => matches(s.getLead(t.leadId), poolSearch.value, t)))
-const accountActions = computed(() => s.salesAccounts.map(account => ({
+const accountActions = computed<AccountAction[]>(() => s.salesAccounts.map(account => ({
   name: account.name,
   subname: `模拟销售身份 · ${account.id === s.account.id ? '当前使用' : '点击切换'}`,
   accountId: account.id,
   color: account.id === s.account.id ? '#16856b' : undefined,
 })))
+const adminActions = computed<AccountAction[]>(() => s.state.accounts
+  .filter(account => account.role === 'sys' || account.role === 'ops')
+  .map(account => ({
+    name: account.name,
+    subname: `${account.role === 'sys' ? '系统管理员' : '业务运营'} · ${account.id === s.account.id ? '当前使用' : '点击切换'}${account.role === 'ops' ? ` · ${account.categories.join('、') || '未授权品类'}` : ''}`,
+    accountId: account.id,
+  })))
 const leadFields = computed(() => {
   const lead = selectedLead.value
   if (!lead) return []
@@ -124,12 +135,34 @@ function statusType(status: string): 'primary' | 'success' | 'warning' | 'danger
 function errorToast(error: unknown) {
   showToast(error instanceof Error ? error.message : '操作未完成，请重试')
 }
-function switchSales(action: { accountId?: string }) {
+function switchSales(action: AccountAction) {
   if (!action.accountId) return
   try {
     s.switchAccount(action.accountId)
     accountSheet.value = false
     showToast('已切换模拟销售身份')
+  } catch (error) { errorToast(error) }
+}
+async function returnToDesktop() {
+  accountSheet.value = false
+  if (isSales.value) {
+    adminSheet.value = true
+    return
+  }
+  try {
+    const failure = await router.replace('/overview')
+    if (failure) throw new Error('未能返回 PC 工作台，请重试')
+  } catch (error) { errorToast(error) }
+}
+async function switchAdmin(action: AccountAction) {
+  try {
+    const account = s.state.accounts.find(account => account.id === action.accountId)
+    if (!account || (account.role !== 'sys' && account.role !== 'ops')) {
+      throw new Error('请选择有效的模拟管理员身份')
+    }
+    s.switchAccount(account.id)
+    adminSheet.value = false
+    await returnToDesktop()
   } catch (error) { errorToast(error) }
 }
 function openTask(task: Task) {
@@ -223,6 +256,7 @@ watch([() => s.account.id, () => s.account.role, () => s.account.personId], () =
   closeToast()
   detailOpen.value = false
   accountSheet.value = false
+  adminSheet.value = false
   selectedTaskId.value = ''
   selectedLeadId.value = ''
   taskSearch.value = ''
@@ -248,9 +282,12 @@ onMounted(() => {
     <div class="mobile-shell">
       <header class="mobile-header">
         <div class="mobile-brand"><span class="mobile-brand-icon">YL</span><div><strong>YL Dispatch</strong><span>公开演示 · 移动工作台</span></div></div>
-        <button class="mobile-account-button" aria-label="切换模拟销售身份" @click="accountSheet = true">
-          <Icon name="exchange" /><span>切换身份</span>
-        </button>
+        <div class="mobile-header-actions">
+          <button class="mobile-account-button" aria-label="切换模拟销售身份" @click="adminSheet = false; accountSheet = true">
+            <Icon name="exchange" /><span>切换身份</span>
+          </button>
+          <button class="mobile-account-button" @click="returnToDesktop"><Icon name="desktop-o" /><span>返回 PC 工作台</span></button>
+        </div>
       </header>
 
       <main v-if="!isSales" class="mobile-welcome">
@@ -260,6 +297,7 @@ onMounted(() => {
         <p>接收任务、认领商机、同步跟进。<br />你的移动销售工作台，随时在线。</p>
         <div class="mobile-gate-note"><Icon name="lock" /><div><strong>当前为{{ s.account.role === 'sys' ? '系统管理员' : '运营' }}身份</strong><span>移动端仅向销售展示本人业务数据，请选择模拟销售身份后进入。</span></div></div>
         <Button type="primary" block round icon="user-circle-o" @click="accountSheet = true">选择模拟销售身份</Button>
+        <Button block round plain icon="desktop-o" @click="returnToDesktop">返回 PC 工作台</Button>
         <div class="mobile-demo-note">演示日期：2026-10-10 · 全部人员为合成数据<br />身份与电脑端共享，切换后电脑端也会同步</div>
         <div class="mobile-welcome-features"><span><Icon name="todo-list-o" />任务协同</span><span><Icon name="aim" />商机认领</span><span><Icon name="passed" />过程留痕</span></div>
       </main>
@@ -327,6 +365,7 @@ onMounted(() => {
             <div class="mobile-profile-stats"><button @click="page = 'tasks'; taskTab = 'pending'"><strong>{{ taskGroups[0]?.count || 0 }}</strong><span>待接收</span></button><button @click="page = 'tasks'; taskTab = 'active'"><strong>{{ taskGroups[1]?.count || 0 }}</strong><span>跟进中</span></button><button @click="page = 'pool'; poolTab = 'mine'"><strong>{{ claims.length }}</strong><span>我的认领</span></button></div>
             <section class="mobile-section"><h3>演示销售资料</h3><dl class="mobile-info-list"><div><dt>演示联系人</dt><dd>演示联系人，无真实联系方式</dd></div><div><dt>负责地区</dt><dd>{{ text(person?.region) }}</dd></div><div><dt>业务品类</dt><dd>{{ person?.categories.join('、') || '未配置' }}</dd></div><div><dt>客户分层</dt><dd>{{ person?.segments.join('、') || '未配置' }}</dd></div><div><dt>销售主体</dt><dd>{{ text(person?.entity) }}</dd></div><div><dt>模拟账号标识</dt><dd>{{ text(person?.wecomId) }}</dd></div></dl></section>
             <button class="mobile-profile-switch" @click="accountSheet = true"><Icon name="exchange" /><span>切换模拟销售身份</span><Icon name="arrow" /></button>
+            <button class="mobile-profile-switch" @click="returnToDesktop"><Icon name="desktop-o" /><span>返回 PC 工作台</span><Icon name="arrow" /></button>
             <div class="mobile-profile-notice"><Icon name="info-o" /><div><strong>本地演示 · 非生产系统</strong><p>固定演示日期：2026-10-10。数据保存在当前浏览器，无外部接口。移动端与电脑端共享账户与业务数据，切换身份会同步影响电脑端。</p></div></div>
           </section>
           <p class="mobile-page-footnote">YL Dispatch · 公开演示 · 合成信息</p>
@@ -340,6 +379,9 @@ onMounted(() => {
 
       <ActionSheet v-model:show="accountSheet" class="mobile-account-sheet" :actions="accountActions" title="选择模拟销售身份" description="全部为合成人员；切换将同步改变电脑端账户" cancel-text="取消" teleport=".mobile-shell" @select="switchSales">
         <template v-if="!accountActions.length" #default><Empty description="暂无模拟销售账户" /></template>
+      </ActionSheet>
+      <ActionSheet v-model:show="adminSheet" class="mobile-account-sheet" :actions="adminActions" title="选择管理员身份，返回 PC" description="仅切换模拟身份，按已有授权展示 PC；同源窗口与预览共享身份，不重置本地记录" cancel-text="取消" teleport=".mobile-shell" @select="switchAdmin">
+        <template v-if="!adminActions.length" #default><Empty description="暂无模拟管理员账户" /></template>
       </ActionSheet>
 
       <Popup v-model:show="detailOpen" class="mobile-detail-popup" position="bottom" round :style="{ height: '90%' }" teleport=".mobile-shell" :close-on-click-overlay="!saving">

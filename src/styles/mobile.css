@@ -35,6 +35,7 @@
 }
 .mobile-app .mobile-header { padding: calc(14px + env(safe-area-inset-top, 0px)) 20px 14px; background: #fff; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid #edf0ef; flex-shrink: 0; z-index: 2; }
 .mobile-app .mobile-brand { display: flex; align-items: center; gap: 10px; }
+.mobile-app .mobile-header-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
 .mobile-app .mobile-brand-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px; background: linear-gradient(140deg, #16856b, #0f6655); color: #fff; font-size: 21px; font-weight: 750; box-shadow: 0 4px 10px #16856b24; }
 .mobile-app .mobile-brand strong { display: block; font-size: 16px; letter-spacing: .4px; }
 .mobile-app .mobile-brand div > span { display: block; font-size: 10px; color: #8a9692; margin-top: 1px; letter-spacing: .7px; }
@@ -119,6 +120,7 @@
 .mobile-app .mobile-profile-switch { display: flex; align-items: center; gap: 10px; width: 100%; padding: 17px; color: #47705b; background: #fff; border: 1px solid #edf1ef; border-radius: 13px; }
 .mobile-app .mobile-profile-switch .van-icon:first-child { color: #16856b; font-size: 19px; }
 .mobile-app .mobile-profile-switch .van-icon:last-child { margin-left: auto; color: #a2afa6; }
+.mobile-app .mobile-profile-switch + .mobile-profile-switch, .mobile-app .mobile-welcome > .van-button + .van-button { margin-top: 10px; }
 .mobile-app .mobile-profile-notice { display: flex; align-items: flex-start; gap: 8px; padding: 20px 4px 0; color: #92a197; font-size: 11px; }
 .mobile-app .mobile-profile-notice > .van-icon { margin-top: 3px; font-size: 15px; flex-shrink: 0; }
 .mobile-app .mobile-profile-notice strong { color: #72897a; font-weight: 500; }
